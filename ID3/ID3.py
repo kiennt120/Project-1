@@ -1,7 +1,5 @@
 from __future__ import print_function
 import numpy as np
-import pandas as pd
-
 
 class TreeNode(object):
     def __init__(self, ids=None, children=[], entropy=0, depth=0):
@@ -22,7 +20,7 @@ class TreeNode(object):
 
 
 def entropy(freq):
-    # remove prob 0 
+    # remove prob 0
     freq_0 = freq[np.array(freq).nonzero()[0]]
     prob_0 = freq_0 / float(freq_0.sum())
     return -np.sum(prob_0 * np.log(prob_0))
@@ -58,16 +56,19 @@ class DecisionTreeID3(object):
 
     def _entropy(self, ids):
         # calculate entropy of a node with index ids
-        if len(ids) == 0: return 0
-        ids = [i + 1 for i in ids]  # panda series index starts from 1
-        freq = np.array(self.target[ids].value_counts())
+        if len(ids) == 0:
+            return 0
+        # ids = [i + 1 for i in ids]  # panda series index starts from 1
+        # print(ids)
+        freq = np.array(self.target.iloc[ids].value_counts())
         return entropy(freq)
 
     def _set_label(self, node):
         # find label for a node if it is a leaf
-        # simply chose by major voting 
-        target_ids = [i + 1 for i in node.ids]  # target is a series variable
-        node.set_label(self.target[target_ids].mode()[0])  # most frequent label
+        # simply chose by major voting
+        # target_ids = [i + 1 for i in node.ids]  # target is a series variable
+        target_ids = node.ids
+        node.set_label(self.target.iloc[target_ids].mode()[0])  # most frequent label
 
     def _split(self, node):
         ids = node.ids
@@ -110,18 +111,10 @@ class DecisionTreeID3(object):
         labels = [None] * npoints
         for n in range(npoints):
             x = new_data.iloc[n, :]  # one point
-            # start from root and recursively travel if not meet a leaf 
+            # start from root and recursively travel if not meet a leaf
             node = self.root
             while node.children:
                 node = node.children[node.order.index(x[node.split_attribute])]
             labels[n] = node.label
 
         return labels
-
-# if __name__ == "__main__":
-#     df = pd.read_csv('weather.csv', index_col = 0, parse_dates = True)
-#     X = df.iloc[:, :-1]
-#     y = df.iloc[:, -1]
-#     tree = DecisionTreeID3(max_depth = 3, min_samples_split = 2)
-#     tree.fit(X, y)
-#     print(tree.predict(X))
